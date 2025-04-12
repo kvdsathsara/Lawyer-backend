@@ -1,0 +1,78 @@
+package edu.nibm.lawyer.Controller;
+
+import edu.nibm.lawyer.Service.LawyerService;
+import edu.nibm.lawyer.dao.Lawyer;
+import edu.nibm.lawyer.dto.ResponseBody.ResponseBody;
+import jakarta.validation.Valid;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.*;
+import java.util.List;
+import java.util.Map;
+
+@RestController
+@CrossOrigin
+@RequestMapping("/api/lawyer")
+public class LawyerController {
+
+    @Autowired
+    private LawyerService lawyerService;
+
+    @PostMapping("/register")
+    public ResponseBody addLawyer(@Valid @RequestBody Lawyer lawyer) {
+        if(lawyerService.addLawyer(lawyer)){
+            ResponseBody responseBody = new ResponseBody();
+            responseBody.addResponse("state", "success");
+            responseBody.addResponse("message", "Lawyer added successfully");
+            return responseBody;
+        }else{
+            ResponseBody responseBody = new ResponseBody();
+            responseBody.addResponse("state", "error");
+            responseBody.addResponse("message", "Lawyer not added");
+            return responseBody;
+        }
+    }
+
+    @GetMapping("/webpage/{page}/{size}")
+    public ResponseBody getLawyers(@PathVariable int page, @PathVariable int size) {
+        ResponseBody responseBody = new ResponseBody();
+        List<Lawyer> lawyers = lawyerService.getAllLawyers(page, size);
+        if(null != lawyers && !lawyers.isEmpty()) {
+            responseBody.addResponse("state", "success");
+            responseBody.addResponse("message", "Lawyers fetched successfully");
+            responseBody.addLawyers(lawyers);
+        }else{
+            responseBody.addResponse("state", "error");
+            responseBody.addResponse("message", "No Lawyers found");
+        }
+
+        return responseBody;
+    }
+
+    @PostMapping("/login")
+    public ResponseBody loginLawyer(@RequestBody Map<String, String> loginRequest) {
+        String email = loginRequest.get("email");
+        String password = loginRequest.get("password");
+        ResponseBody responseBody = new ResponseBody();
+        int lawyerId = lawyerService.loginLawyer(email, password);
+        if(-1 != lawyerId) {
+            responseBody.addResponse("message", "Lawyer logged in successfully");
+            responseBody.addResponse("id", String.valueOf(lawyerId));
+        }else{
+            responseBody.addResponse("error", "lawyer not found");
+        }
+        return responseBody;
+    }
+
+    @GetMapping("/getbyid/{id}")
+    public ResponseBody getLawyer(@PathVariable int id) {
+        ResponseBody responseBody = new ResponseBody();
+        Lawyer lawyer = lawyerService.getLawyer(id);
+        if(null != lawyer) {
+            responseBody.addResponse("message", "Lawyer fetched successfully");
+            responseBody.addLawyers(List.of(lawyer));
+        }else{
+            responseBody.addResponse("error", "Lawyer not found");
+        }
+        return responseBody;
+    }
+}
